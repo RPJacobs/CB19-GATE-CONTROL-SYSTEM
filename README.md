@@ -36,6 +36,7 @@ Wrote a small program to attach the tmt wifi unit to the esp-link module [tmt-re
 After opening the TMT app we can see the serial traffic between the tmt module and the cb19 box. This is in plain text!
 
 Gate  : READ STATUS;src=P0004A83
+
 TMT   : ACK STATUS:FULL CLOSED,0
 
 Pressing all the buttons gave me all het commands.
