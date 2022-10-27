@@ -1,6 +1,6 @@
 # CB19-GATE-CONTROL-SYSTEM
 
-Removing my TMT CHOW remote gate controle, because it connects to an external server (security risk). Intergrate RS323 via ESP32 with MQTT > Homebridge > Applehomekit
+Removing my TMT CHOW remote gate control, because it connects to an external server (security risk). Intergrate RS323 via ESP32 with MQTT > Homebridge > Applehomekit
 
 Step 1:
 Open the TMT module
@@ -29,7 +29,7 @@ Soldering it to an ESP
 
 <img src="https://github.com/RPJacobs/CB19-GATE-CONTROL-SYSTEM/blob/main/img/esp.jpg?raw=true" width=20% height=20%>
 
-Now we need to bridge it to another ESP, connected to the CB19 controle box. I used esp-link for that (https://github.com/jeelabs/esp-link)
+Now we need to bridge it to another ESP, connected to the CB19 control box. I used esp-link for that (https://github.com/jeelabs/esp-link)
 
 Wrote a small program to attach the tmt wifi unit to the esp-link module [tmt-reverse.ino](tmt-reverse.ino) now we have a MITM serial proxy!
 
