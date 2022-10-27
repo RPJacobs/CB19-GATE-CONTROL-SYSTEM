@@ -105,13 +105,13 @@ https://github.com/arachnetech/homebridge-mqttthing
 
 ```
 
-et voila! No more TMT needed.
+et voilà! No more TMT needed.
 
-To still be able to connect the tmt module to a fake control box I created a php script to act as the esp-link module.
+To still be able to connect the tmt module to a fake control box I used a php script to act as the esp-link module.
 
 [server.php](server.php)
 
-Now we can also find the programm commands [commands.php](commands.php)
+Now we can also find the programm commands [commands.php](commands.php) not implemented in the gate.be file...
 
 READ FUNCTION;src=P0004A83 gives a string with all programmable items:
 
