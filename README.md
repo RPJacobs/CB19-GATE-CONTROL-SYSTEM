@@ -50,7 +50,7 @@ STOP
 
 Now it time to flash the esp connected to the control box with tasmota (https://tasmota.github.io/). It has the main funtions is easy to use and you van program drivers in berry (https://tasmota.github.io/docs/Berry/)
 
-So wrote a small berry file [Gate.be](Gate.be) , uploaded this to the tasmota esp connected to the control box and made a sort of serial to MQTT bridge.
+So wrote a small berry file [gate.be](gate.be) , uploaded this to the tasmota esp connected to the control box and made a sort of serial to MQTT bridge.
 
 send you commands to /test
 
