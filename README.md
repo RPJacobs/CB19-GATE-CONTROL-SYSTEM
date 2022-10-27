@@ -31,7 +31,9 @@ Soldering it to an ESP
 
 Now we need to bridge it to another ESP, connected to the CB19 controle box. I used esp-link for that (https://github.com/jeelabs/esp-link)
 
-Wrote a small program to attach the tmt wifi unit to the esp-link module [here](main/tmt-reverse.ino)
+Wrote a small program to attach the tmt wifi unit to the esp-link module [here](tmt-reverse.ino)
+
+
 
 
 
