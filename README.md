@@ -69,7 +69,7 @@ https://github.com/arachnetech/homebridge-mqttthing
             "accessory": "mqttthing",
             "type": "door",
             "name": "DualGate",
-            "url": "mqtt://10.13.1.4:1883",
+            "url": "mqtt://10.x.x.x:1883",
             "topics": {
                 "getCurrentPosition": "/Gate/percentage",
                 "setTargetPosition": "/Gate/set/percentage",
@@ -88,7 +88,7 @@ https://github.com/arachnetech/homebridge-mqttthing
             "accessory": "mqttthing",
             "type": "door",
             "name": "Pedestrian",
-            "url": "mqtt://10.13.1.4:1883",
+            "url": "mqtt://10.x.x.x:1883",
             "topics": {
                 "getCurrentPosition": "/Gate/ped_percentage",
                 "setTargetPosition": "/Gate/set/ped_percentage",
