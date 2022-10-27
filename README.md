@@ -107,6 +107,23 @@ https://github.com/arachnetech/homebridge-mqttthing
 
 et voila! No more TMT needed.
 
+To still be able to connect the tmt module to a fake control box I created a php script to act as the esp-link module.
+
+[server.php](server.php)
+
+Now we can also find the programm commands [commands.php](commands.php)
+
+READ FUNCTION;src=P0004A83 gives a string with all programmable items:
+
+ACK READ FUNCTION,1:1,2:01,3:01,4:4,5:4,6:4,7:1,8:2,9:7,A:1,B:1,C:0,D:1,E:0,F:0,G:0,H:1,I:2,J:0;src=P0004A83
+
+We can also write this string:
+
+WRITE FUNCTION,1:1,2:02,3:01,4:4,5:4,6:4,7:1,8:2,9:7,A:1,B:1,C:0,D:1,E:0,F:0,G:0,H:1,I:2,J:0;src=P0004A83
+
+Please check your control box documentation for all options. [CB19U-34100-125-10-C_CB19_manual_std_Wi-Fi_au.pdf](CB19U-34100-125-10-C_CB19_manual_std_Wi-Fi_au.pdf) page 10 & 11 7.2 parameters.
+
+<img width="901" alt="Screenshot 2022-10-27 at 17 15 07" src="https://user-images.githubusercontent.com/14312145/198329367-f20a2907-8d3f-4c4d-8f33-9ec19f592087.png">
 
 
 
