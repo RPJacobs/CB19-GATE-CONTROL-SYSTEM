@@ -31,7 +31,83 @@ Soldering it to an ESP
 
 Now we need to bridge it to another ESP, connected to the CB19 controle box. I used esp-link for that (https://github.com/jeelabs/esp-link)
 
-Wrote a small program to attach the tmt wifi unit to the esp-link module [here](tmt-reverse.ino)
+Wrote a small program to attach the tmt wifi unit to the esp-link module [tmt-reverse.ino](tmt-reverse.ino) now we have a MITM serial proxy!
+
+After opening the TMT app we can see the serial traffic between the tmt module and the cb19 box. This is in plain text!
+
+Gate  : READ STATUS;src=P0004A83
+
+TMT   : ACK STATUS:FULL CLOSED,0
+
+We also get messages from $V1PKF0 (the box system controller, is a an main event is triggerd:
+
+$V1PKF0,17,Closed;src=0001
+
+Pressing all the buttons gave me all het commands.
+
+PED OPEN
+FULL OPEN
+FULL CLOSE
+READ FUNCTION
+READ DEVINFO
+STOP
+
+Now it time to flash the esp connected to the control box with tasmota (https://tasmota.github.io/). It has the main funtions is easy to use and you van program drivers in berry (https://tasmota.github.io/docs/Berry/)
+
+So wrote a small berry file [gate.be](gate.be) , uploaded this to the tasmota esp connected to the control box and made a sort of serial to MQTT bridge.
+
+send you commands to /test
+
+feedback on /Gate
+
+In homebridge add a door-thing
+https://github.com/arachnetech/homebridge-mqttthing
+
+
+```json
+{
+            "accessory": "mqttthing",
+            "type": "door",
+            "name": "DualGate",
+            "url": "mqtt://10.13.1.4:1883",
+            "topics": {
+                "getCurrentPosition": "/Gate/percentage",
+                "setTargetPosition": "/Gate/set/percentage",
+                "getTargetPosition": "/Gate/set/updown",
+                "getPositionState": "/Gate/getState"
+            },
+            "positionStateValues": [
+                "DECREASING",
+                "INCREASING",
+                "STOPPED"
+            ],
+            "minPosition": 0,
+            "maxPosition": 99
+        },
+        {
+            "accessory": "mqttthing",
+            "type": "door",
+            "name": "Pedestrian",
+            "url": "mqtt://10.13.1.4:1883",
+            "topics": {
+                "getCurrentPosition": "/Gate/ped_percentage",
+                "setTargetPosition": "/Gate/set/ped_percentage",
+                "getPositionState": "/Gate/getPState"
+            },
+            "positionStateValues": [
+                "DECREASING",
+                "INCREASING",
+                "STOPPED"
+            ],
+            "minPosition": 0,
+            "maxPosition": 25
+        },
+
+```
+
+et voila! No more TMT needed.
+
+
 
 
 
