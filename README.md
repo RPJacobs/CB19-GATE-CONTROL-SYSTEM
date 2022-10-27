@@ -39,6 +39,10 @@ Gate  : READ STATUS;src=P0004A83
 
 TMT   : ACK STATUS:FULL CLOSED,0
 
+We also get messages from $V1PKF0 (the box system controller, is a an main event is triggerd:
+
+$V1PKF0,17,Closed;src=0001
+
 Pressing all the buttons gave me all het commands.
 
 PED OPEN
