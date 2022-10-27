@@ -64,13 +64,13 @@ https://github.com/arachnetech/homebridge-mqttthing
 {
             "accessory": "mqttthing",
             "type": "door",
-            "name": "Hek",
+            "name": "DualGate",
             "url": "mqtt://10.13.1.4:1883",
             "topics": {
-                "getCurrentPosition": "/hek/percentage",
-                "setTargetPosition": "/hek/set/percentage",
-                "getTargetPosition": "/hek/set/updown",
-                "getPositionState": "/gate/getState"
+                "getCurrentPosition": "/Gate/percentage",
+                "setTargetPosition": "/Gate/set/percentage",
+                "getTargetPosition": "/Gate/set/updown",
+                "getPositionState": "/Gate/getState"
             },
             "positionStateValues": [
                 "DECREASING",
@@ -83,12 +83,12 @@ https://github.com/arachnetech/homebridge-mqttthing
         {
             "accessory": "mqttthing",
             "type": "door",
-            "name": "Loophek",
+            "name": "Pedestrian",
             "url": "mqtt://10.13.1.4:1883",
             "topics": {
-                "getCurrentPosition": "/hek/ped_percentage",
-                "setTargetPosition": "/hek/set/ped_percentage",
-                "getPositionState": "/gate/getPState"
+                "getCurrentPosition": "/Gate/ped_percentage",
+                "setTargetPosition": "/Gate/set/ped_percentage",
+                "getPositionState": "/Gate/getPState"
             },
             "positionStateValues": [
                 "DECREASING",
