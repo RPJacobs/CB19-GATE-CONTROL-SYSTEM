@@ -1,9 +1,83 @@
-# CB19-GATE-CONTROL-SYSTEM
+# CB19 gate control with ESP32 and Tasmota
 
-Removing my TMT CHOW remote gate control, because it connects to an external server (security risk). Intergrate RS323 via ESP32 with MQTT > Homebridge > Applehomekit
+[gate.be](gate.be) connects a TMT CB19 gate controller to a local MQTT broker and Homebridge. The ESP32 reads the gate position over serial, displays all 19 controller settings and provides controls for pairing a remote and learning gate travel. The TMT CHOW cloud service is optional.
 
-Step 1:
-Open the TMT module
+This driver has been used with Tasmota32 14.4.1 and a CB19 reporting `P190,PS17062E,V0.3` through `READ DEVINFO`. The web controls use Dutch labels. The original hardware photos and serial captures are included [below](#hardware-and-protocol-notes).
+
+## Install or upgrade
+
+1. Use an ESP32 running Tasmota with Berry, MQTT, the web server and filesystem enabled. The driver opens GPIO17 as RX and GPIO16 as TX at 9600 baud, 8 data bits, no parity and one stop bit. Check the serial interface and logic levels for your board before connecting it.
+2. Configure your broker in Tasmota and back up the current Berry driver and `autoexec.be`. On an upgrade, check the MQTT mappings below. Movement commands should be published with **retain off**. A broker can replay a retained command when the ESP reconnects.
+3. Upload [gate.be](gate.be) to the root of the ESP filesystem using **Manage File System**. Add the following line to `autoexec.be`, keeping your other startup scripts. If the installed driver is named `hek.be`, use that name in the load line instead. Load a single copy of the driver.
+
+   ```berry
+   load("gate.be")
+   ```
+
+4. With the gate in sight and the travel area clear, restart the ESP. Open its home page and check **Gate Percentage** and **F9 Automatisch sluiten**. To check the serial link without moving the gate, run `Hek.send("READ DEVINFO")` in the Berry console. The reply also appears on `/hek/serial`.
+
+For filesystem and startup details, see the [Tasmota Berry documentation](https://tasmota.github.io/docs/Berry/).
+
+## ESP web controls
+
+| Home-screen button | What it does |
+| --- | --- |
+| **CB19-instellingen wijzigen** | Opens the settings editor at `/cb19`. Select one of F1–F9 or FA–FJ, choose a value and press **Wijziging opslaan**. The ESP checks for standstill, reads the full settings frame, changes one field and reads the result back. |
+| **AB inleren** | Opens the hand-transmitter form. Press **Handzender inleermodus starten**, then press the button on the remote. The page displays the controller’s `LearnStart` and `LearnComplete` events when received. |
+| **Hek inleren** | Opens the gate travel-learning form. The cycle **moves the gate leaves**. Stand by the gate, check that the travel area is clear, tick the confirmation and press **Inleercyclus starten**. The ESP requests a fresh gate position before sending `AUTO LEARN`. |
+| **Inleerstatus** | Opens `/inleren`. Press **Inleerstatus uitlezen** to request `READ LEARN STATUS` at any time. During learning, the ESP polls approximately every three seconds and displays both the latest status reply and the latest learning event. |
+
+The two start buttons use separate commands, `REMOTE LEARN` for a transmitter and `AUTO LEARN` for gate travel. For example, `ACK LEARN STATUS:SYSTEM LEARN COMPLETE` describes the **gate travel** result. Look for **LearnComplete** after starting transmitter pairing to see its completion event. Automatic monitoring runs for up to one minute for a transmitter or five minutes for gate travel. If monitoring times out, check the gate and request its status again.
+
+### Controller settings
+
+The home page shows the decoded value and the raw controller code in brackets. These codes are useful when comparing the screen with the manual or a serial capture.
+
+| Setting | Meaning |
+| --- | --- |
+| F1 | Motor feedback mode |
+| F2 / F3 | Opening and closing current limits. In Hall-sensor mode, F3 sets additional closing current. |
+| F4 / F5 / F6 | Opening, closing and deceleration speeds |
+| F7 / F8 | Delay between the leaves during opening and closing |
+| F9 | Automatic closing delay |
+| FA / FB / FC | Safety input mode, pedestrian mode and warning light |
+| FD / FE | Photocells 1 and 2 |
+| FF / FG / FH | Buzzer, electric lock and display orientation |
+| FI / FJ | Number of leaves and reversal on closing overcurrent |
+
+For **F9**, the web editor supports every delay in the table. The MQTT autoclose switch uses a fixed three-minute delay when switched on.
+
+| Raw F9 value | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Delay | Off | 3 s | 10 s | 20 s | 40 s | 60 s | 120 s | 180 s | 300 s |
+
+Check sections 7.2–7.3 of the [CB19 manual](CB19U-34100-125-10-C_CB19_manual_std_Wi-Fi_au.pdf) when selecting values for your installation.
+
+## MQTT and Homebridge
+
+MQTT topics and payloads are case-sensitive. When upgrading from the original driver, replace the old `/Gate/set/...`, `/Gate/percentage`, `/Gate/ped_percentage` and `/Gate/serial` mappings with the exact names below. Replace the old `/Gate/set/updown` feedback mapping with the corresponding target door state below. The Berry console instance is now `Hek`.
+
+| Homebridge mapping | Full gate | Pedestrian gate |
+| --- | --- | --- |
+| Send a target | `/hek/set/percentage` · `100` or `99` opens, `0` closes | `/hek/set/ped_percentage` · `25` opens, `0` closes the gate |
+| Read current position | `/hek/percentage` | `/hek/ped_percentage` |
+| Read current door state | `/gate/getCurrentDoorState` | `/gate/getCurrentPedState` |
+| Read target door state | `/gate/getTargetDoorState` | `/gate/getTargetPedState` |
+| Read movement direction | `/gate/getState` | `/gate/getPState` |
+
+For a Homebridge garage-door accessory, map current state to `open`, `closed`, `opening`, `closing` and `stopped`. Map target state to `open` and `closed`, and publish the numeric payload for the selected target. Motion feedback uses `INCREASING`, `DECREASING` and `STOPPED`. The legacy pedestrian target alias `/gate/getTargetDoorPState` publishes `Open` and `Closed`.
+
+| Other MQTT topics | Payload or result |
+| --- | --- |
+| `/hek/autoclose/cmd` | Send `ON` for F9 = 7 (180 s) or `OFF` for F9 = 0. |
+| `/hek/autoclose/state` | Read `ON` for any nonzero F9 delay or `OFF` for zero. |
+| `/hek/autoclose/start` | Publish any payload to request a fresh position and settings report. |
+| `/hek/serial` | Subscribe to read controller replies and events. |
+| `/test` | Accepts `READ DEVINFO`, `READ FUNCTION`, `FULL OPEN`, `PED OPEN`, `FULL CLOSE` and `STOP`. |
+
+## Hardware and protocol notes
+
+The original project replaced the TMT CHOW Wi-Fi module to keep control local. The module header is marked `RST`, `V5`, `RX`, `TX` and `GND`. These are the original module and ESP photos.
 
 <table>
 <tr><td>
@@ -17,120 +91,20 @@ Open the TMT module
 </td></tr>
 </table>
 
-Here we can find the PIN OUT
-
-RST
-V5
-RX
-TX
-GND
-
-Soldering it to an ESP
-
 <img src="https://github.com/RPJacobs/CB19-GATE-CONTROL-SYSTEM/blob/main/img/esp.jpg?raw=true" width=20% height=20%>
 
-Now we need to bridge it to another ESP, connected to the CB19 control box. I used esp-link for that (https://github.com/jeelabs/esp-link)
+The original capture setup used [tmt-reverse.ino](tmt-reverse.ino) and [esp-link](https://github.com/jeelabs/esp-link) to observe traffic between the CHOW module and the CB19. [server.php](server.php) emulates the controller for the module. [commands.php](commands.php) records the serial commands. A position request and an unsolicited close event look like this on the wire.
 
-Wrote a small program to attach the tmt wifi unit to the esp-link module [tmt-reverse.ino](tmt-reverse.ino) now we have a MITM serial proxy!
-
-After opening the TMT app we can see the serial traffic between the tmt module and the cb19 box. This is in plain text!
-
-Gate  : READ STATUS;src=P0004A83
-
-TMT   : ACK STATUS:FULL CLOSED,0
-
-We also get messages from $V1PKF0 (the box system controller, if a main event is triggerd:
-
+```text
+READ STATUS;src=P0004A83
+ACK STATUS:FULL CLOSED,0
 $V1PKF0,17,Closed;src=0001
-
-Pressing all the buttons gave me all het commands.
-
-PED OPEN
-FULL OPEN
-FULL CLOSE
-READ FUNCTION
-READ DEVINFO
-STOP
-
-Now it time to flash the esp connected to the control box with tasmota (https://tasmota.github.io/). It has the main funtions is easy to use and you van program drivers in berry (https://tasmota.github.io/docs/Berry/)
-
-So wrote a small berry file [gate.be](gate.be) , uploaded this to the tasmota esp connected to the control box and made a sort of serial to MQTT bridge.
-
-send you commands to /test
-
-feedback on /Gate
-
-In homebridge add a door-thing
-https://github.com/arachnetech/homebridge-mqttthing
-
-
-```json
-{
-            "accessory": "mqttthing",
-            "type": "door",
-            "name": "DualGate",
-            "url": "mqtt://10.x.x.x:1883",
-            "topics": {
-                "getCurrentPosition": "/Gate/percentage",
-                "setTargetPosition": "/Gate/set/percentage",
-                "getTargetPosition": "/Gate/set/updown",
-                "getPositionState": "/Gate/getState"
-            },
-            "positionStateValues": [
-                "DECREASING",
-                "INCREASING",
-                "STOPPED"
-            ],
-            "minPosition": 0,
-            "maxPosition": 99
-        },
-        {
-            "accessory": "mqttthing",
-            "type": "door",
-            "name": "Pedestrian",
-            "url": "mqtt://10.x.x.x:1883",
-            "topics": {
-                "getCurrentPosition": "/Gate/ped_percentage",
-                "setTargetPosition": "/Gate/set/ped_percentage",
-                "getPositionState": "/Gate/getPState"
-            },
-            "positionStateValues": [
-                "DECREASING",
-                "INCREASING",
-                "STOPPED"
-            ],
-            "minPosition": 0,
-            "maxPosition": 25
-        },
-
 ```
 
-et voilà! No more TMT needed.
+The CB19 returns all settings in one `ACK READ FUNCTION` reply and expects a full `WRITE FUNCTION` frame. The editor preserves the other 18 fields, their order and their original padding. This example is a read from the original project.
 
-To still be able to connect the tmt module to a fake control box I used a php script to act as the esp-link module.
-
-[server.php](server.php)
-
-Now we can also find the programm commands [commands.php](commands.php) not implemented in the gate.be file...
-
-READ FUNCTION;src=P0004A83 gives a string with all programmable items:
-
+```text
 ACK READ FUNCTION,1:1,2:01,3:01,4:4,5:4,6:4,7:1,8:2,9:7,A:1,B:1,C:0,D:1,E:0,F:0,G:0,H:1,I:2,J:0;src=P0004A83
-
-We can also write this string:
-
-WRITE FUNCTION,1:1,2:02,3:01,4:4,5:4,6:4,7:1,8:2,9:7,A:1,B:1,C:0,D:1,E:0,F:0,G:0,H:1,I:2,J:0;src=P0004A83
-
-Please check your control box documentation for all options. [CB19U-34100-125-10-C_CB19_manual_std_Wi-Fi_au.pdf](CB19U-34100-125-10-C_CB19_manual_std_Wi-Fi_au.pdf) page 10 & 11 7.2 parameters.
+```
 
 <img width="901" alt="Screenshot 2022-10-27 at 17 15 07" src="https://user-images.githubusercontent.com/14312145/198329367-f20a2907-8d3f-4c4d-8f33-9ec19f592087.png">
-
-
-
-
-
-
-
-
-
-
