@@ -494,6 +494,40 @@ end
 
 var cb19_panel = CB19Panel()
 
+# Cache the controller identity from its serial reply, independently of MQTT.
+class CB19DeviceInfo
+  var value, retry_at
+
+  def read_if_due(driver)
+    if self.value != nil || driver.readStatus || driver.refresh_ticks != 0 || driver.f9_ticks != 0 return end
+    if cb19_panel.phase != nil || cb19_learn.phase != nil return end
+    if self.retry_at != nil && !tasmota.time_reached(self.retry_at) return end
+    self.retry_at = tasmota.millis(30000)
+    driver.send("READ DEVINFO")
+  end
+
+  def receive(msg)
+    var prefix = "ACK READ DEVINFO:"
+    if !string.startswith(msg,prefix) return end
+    var data = string.split(msg[size(prefix)..-1],";")[0]
+    var parts = string.split(data,",")
+    if size(parts) != 3 || size(data) > 96 return end
+    for part : parts
+      if size(part) == 0 return end
+    end
+    # Escape both HTML and Tasmota's {s}/{m}/{e} table markers.
+    data = string.replace(string.replace(string.replace(data,"&","&amp;"),"<","&lt;"),">","&gt;")
+    self.value = string.replace(data,"{","&#123;")
+  end
+
+  def row()
+    var shown = self.value == nil ? "Wachten op antwoord" : self.value
+    return "{s}READ DEVINFO{m}" + shown + "{e}"
+  end
+end
+
+var cb19_info = CB19DeviceInfo()
+
 class HekDriver : Driver
   var ser, rx, discard_line, sent, percentage, readStatus, poll_ticks, settle
   var desired_motion, ped_active, desired_f9, written_f9, verify_f9, f9_ticks, refresh_ticks
@@ -759,7 +793,9 @@ class HekDriver : Driver
   def line(msg)
     print(msg)
     self.publish("/hek/serial", msg)
-    if string.startswith(msg, "ACK STATUS:")
+    if string.startswith(msg, "ACK READ DEVINFO:")
+      cb19_info.receive(msg)
+    elif string.startswith(msg, "ACK STATUS:")
       self.status(msg[11..-1])
     elif string.startswith(msg, "ACK READ FUNCTION,")
       self.function_frame(msg, true)
@@ -834,11 +870,13 @@ class HekDriver : Driver
         print("Hek: autoclose aanvraag verlopen")
       end
     end
+    cb19_info.read_if_due(self)
   end
 
   def web_sensor()
     var position = self.percentage == nil ? "?" : self.percentage
     tasmota.web_send_decimal(string.format("{s}Gate Percentage {m}%s %%{e}", position))
+    tasmota.web_send(cb19_info.row())
     cb19_panel.show(self)
   end
 end
