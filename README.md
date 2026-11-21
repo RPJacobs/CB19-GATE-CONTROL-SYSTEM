@@ -51,7 +51,17 @@ For **F9**, the web editor supports every delay in the table. The MQTT autoclose
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Delay | Off | 3 s | 10 s | 20 s | 40 s | 60 s | 120 s | 180 s | 300 s |
 
-Check sections 7.2–7.3 of the [CB19 manual](CB19U-34100-125-10-C_CB19_manual_std_Wi-Fi_au.pdf) when selecting values for your installation.
+## Hardware manuals
+
+The [PAPILLON250 articulated-arm opener manual](PAPILLON250.pdf) covers the CB19 with controller ID `PS17062E`. The page numbers below are printed in the manual. The cover and contents add two pages in a PDF viewer.
+
+| Procedure | Section | Printed pages |
+| --- | --- | --- |
+| Pair a remote and select OSC (open–stop–close) or PED (pedestrian) with the board’s RF Learn button | 3.1–3.2 | 8–9 |
+| Learn gate travel | 3.3.2 | 10 |
+| Look up controller settings, including F9 automatic closing | 5.1–5.2 | 12–13 (F9 on 13) |
+
+The [CB19 control-box manual](CB19U-34100-125-10-C_CB19_manual_std_Wi-Fi_au.pdf) also documents the controller parameters and operating logic in sections 7.2–7.3. TMT Automation hosts the [PAPILLON250 manual on its website](https://www.tmt-automation.us/_upload/files/3410012416BPS17062EPAPILLONCB19manualen.pdf).
 
 ## MQTT and Homebridge
 
