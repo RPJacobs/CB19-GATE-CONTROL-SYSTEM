@@ -14,7 +14,7 @@ This driver has been used with Tasmota32 14.4.1 and a CB19 reporting `P190,PS170
    load("gate.be")
    ```
 
-4. With the gate in sight and the travel area clear, restart the ESP. Open its home page and check **Gate Percentage** and **F9 Automatisch sluiten**. To check the serial link without moving the gate, run `Hek.send("READ DEVINFO")` in the Berry console. The reply also appears on `/hek/serial`.
+4. With the gate in sight and the travel area clear, restart the ESP. Open its home page. Under **Gate Percentage**, the **READ DEVINFO** row shows the identity returned by your controller, for example `P190,PS17062E,V0.3`. The ESP requests it when the gate driver is idle and retries after 30 seconds if no valid reply arrives. The settings below start with **F9 Automatisch sluiten**. To refresh the identity manually, run `Hek.send("READ DEVINFO")` in the Berry console. The reply updates the row and also appears on `/hek/serial`.
 
 For filesystem and startup details, see the [Tasmota Berry documentation](https://tasmota.github.io/docs/Berry/).
 
