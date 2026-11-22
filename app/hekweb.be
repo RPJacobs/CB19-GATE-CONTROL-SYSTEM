@@ -18,13 +18,34 @@ class HekOverzicht : Driver
   end
 
   def web_add_handler()
-    webserver.on("/hek", /->Hek.web_display.asset("/hek.html","text/html; charset=utf-8"), webserver.HTTP_GET)
-    webserver.on("/hek-taal.js", /->Hek.web_display.asset("/hek-taal.js","application/javascript; charset=utf-8"), webserver.HTTP_GET)
-    webserver.on("/nl.json", /->Hek.web_display.asset("/nl.json","application/json; charset=utf-8"), webserver.HTTP_GET)
-    webserver.on("/en.json", /->Hek.web_display.asset("/en.json","application/json; charset=utf-8"), webserver.HTTP_GET)
-    webserver.on("/de.json", /->Hek.web_display.asset("/de.json","application/json; charset=utf-8"), webserver.HTTP_GET)
-    webserver.on("/hek-data", /->Hek.web_display.data(), webserver.HTTP_GET)
+    # Reserve the control and status routes before any optional download links.
     webserver.on("/hek-actie", /->Hek.web_display.submit(), webserver.HTTP_POST)
+    webserver.on("/hek-data", /->Hek.web_display.data(), webserver.HTTP_GET)
+    webserver.on("/hek", /->Hek.web_display.page(), webserver.HTTP_GET)
+
+    # Older pages and bookmarks may still request assets by their filename.
+    try
+      webserver.on("/nl.json", /->Hek.web_display.asset("/nl.json","application/json; charset=utf-8"), webserver.HTTP_GET)
+      webserver.on("/en.json", /->Hek.web_display.asset("/en.json","application/json; charset=utf-8"), webserver.HTTP_GET)
+      webserver.on("/de.json", /->Hek.web_display.asset("/de.json","application/json; charset=utf-8"), webserver.HTTP_GET)
+      webserver.on("/hek-taal.js", /->Hek.web_display.asset("/hek-taal.js","application/javascript; charset=utf-8"), webserver.HTTP_GET)
+    except "internal_error" as e, message
+      if message != "no more slots for webserver hooks" raise e, message end
+    end
+  end
+
+  def page()
+    if !webserver.has_arg("bestand")
+      return self.asset("/hek.html","text/html; charset=utf-8")
+    end
+    var name = webserver.arg("bestand")
+    if name == "hek-taal.js"
+      return self.asset("/hek-taal.js","application/javascript; charset=utf-8")
+    end
+    if name == "nl.json" || name == "en.json" || name == "de.json"
+      return self.asset("/" + name,"application/json; charset=utf-8")
+    end
+    if webserver.check_privileged_access() self.reply(404,"text/plain","404") end
   end
 
   def web_add_main_button()
