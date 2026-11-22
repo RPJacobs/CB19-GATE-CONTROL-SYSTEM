@@ -1,0 +1,55 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "CB19-hek toevoegen",
+        "data": {
+          "address": "Controlleradres",
+          "name": "Naam",
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord"
+        }
+      },
+      "confirm": {
+        "title": "Ontdekt hek toevoegen",
+        "data": {
+          "name": "Naam",
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Inloggegevens bijwerken",
+        "data": {
+          "username": "Gebruikersnaam",
+          "password": "Wachtwoord"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Deze CB19 is niet bereikbaar of herkenbaar. Controleer het adres en de ESP-appversie.",
+      "invalid_auth": "Onjuiste inloggegevens."
+    },
+    "abort": {
+      "already_configured": "Deze controller is al ingesteld.",
+      "cannot_connect": "Deze CB19 is niet bereikbaar of herkenbaar. Controleer het adres en de ESP-appversie.",
+      "invalid_discovery": "Ongeldige aankondiging.",
+      "reauth_successful": "Inloggegevens bijgewerkt."
+    }
+  },
+  "entity": {
+    "cover": {
+      "gate": {
+        "name": "Beide hekken"
+      },
+      "pedestrian": {
+        "name": "Loophek"
+      }
+    },
+    "select": {
+      "delay": {
+        "name": "Automatisch sluiten"
+      }
+    }
+  }
+}
