@@ -12,16 +12,18 @@ a{color:var(--gold);text-underline-offset:3px}header a{font-size:.83rem;color:va
 h2,summary{font-size:1.05rem;font-weight:660;letter-spacing:-.035em}.line span,dt,small{color:var(--muted);font-size:.82rem}
 .hero{background:linear-gradient(160deg,#201d1c,#18191c 68%)}
 .reading{display:flex;align-items:center;gap:8px}.reading b{border-left:1px solid #49423e;padding-left:8px;font-size:.85rem;color:var(--gold);font-variant-numeric:tabular-nums}
-figure{margin:20px 0 24px}#gate{display:block;width:100%;height:auto}
+figure{margin:20px 0 6px}#gate{display:block;width:100%;height:auto}
 .leaf{transition:transform 1s ease-in-out}#gate[data-unknown] .leaf{visibility:hidden}
-.actions{display:grid;grid-template-columns:1fr 1.17fr .8fr;gap:8px;border-top:1px solid var(--edge);padding-top:17px}
+.actions{display:grid;grid-template-columns:1.12fr 1.25fr .85fr .7fr;gap:8px;border-top:1px solid var(--edge);padding-top:17px}
 button{font:650 .9rem Inter,system-ui,sans-serif;min-height:45px;padding:7px 9px;cursor:pointer;border-radius:13px;border:1px solid #48464a;background:#28282b;color:#eeeae5}
 button[value=both]{color:var(--gold);background:#372920;border-color:#73543c}button[value=ped]{color:#a9dce4;background:#203138;border-color:#38555d}
+button[value=stop]{color:#ffc2ad;background:#392725;border-color:#70473e}
 button:disabled{opacity:.48;cursor:default}button:not(:disabled):hover{filter:brightness(1.17)}:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
-#feedback:not(:empty){font-size:.85rem;margin-top:12px;color:var(--gold)}.data{margin:12px 0}.data div,#rows div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-top:1px solid var(--edge);padding:12px 0}dd{text-align:right;overflow-wrap:anywhere;font-size:.86rem}
+#feedback{min-height:1.3em;margin:0 0 9px;text-align:center;font-size:.85rem;color:var(--gold)}.data{margin:12px 0}.data div,#rows div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-top:1px solid var(--edge);padding:12px 0}dd{text-align:right;overflow-wrap:anywhere;font-size:.86rem}
 details{border-top:1px solid var(--edge);padding:12px 0}details:last-child{padding-bottom:0}summary{cursor:pointer;list-style:none;font-size:.9rem}summary::-webkit-details-marker{display:none}summary::after{content:'⌄';color:var(--muted)}details[open]>summary::after{transform:rotate(180deg)}
 #rows{margin-top:10px}nav{display:grid;gap:12px;padding:14px 0 2px;font-size:.9rem}
-@media(max-width:700px){.grid{grid-template-columns:1fr}.grid{gap:12px}header{margin-bottom:16px}figure{margin:14px 0 18px}}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.grid{gap:12px}header{margin-bottom:16px}figure{margin:14px 0 4px}}
+@media(max-width:500px){.actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.leaf{transition:none}}
 
 .side{display:grid;gap:16px;min-width:0}
@@ -38,7 +40,7 @@ select{min-height:40px;max-width:60%;color:#f4f1eb;background:#242428;border:1px
   .grid:not(:has(details[open])){align-items:stretch}
   .side{grid-template-rows:auto 1fr}
   .hero{display:flex;flex-direction:column}
-  .hero figure{margin:auto 0;padding:20px 0 24px}
+  .hero figure{margin:auto 0;padding:20px 0 6px}
 }
 header{flex-wrap:wrap}.langtools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 #locale{max-width:none;min-height:34px;font-size:.84rem}#langError:empty{display:none}
@@ -63,7 +65,8 @@ header{flex-wrap:wrap}.langtools{display:flex;align-items:center;gap:12px;flex-w
 <g fill="url(#post)" stroke="#817a73"><rect x="27" y="38" width="12" height="127" rx="1"/><rect x="401" y="38" width="12" height="127" rx="1"/></g>
 <path d="M25 38h16m358 0h16" stroke="#bab1a6" stroke-width="4"/><path d="M33 71h8m-8 60h8m358-60h8m-8 60h8" stroke="#827b73" stroke-width="4"/></svg>
 </figure>
-<div class="actions" role="group" aria-label="Hekbediening"><button value="both" disabled>Beide openen</button><button value="ped" disabled>Loophek openen</button><button value="close" disabled>Sluiten</button></div><p id="feedback" role="status"></p></section>
+<p id="feedback" role="status" aria-atomic="true"></p>
+<div class="actions" role="group" aria-label="Hekbediening"><button value="both" disabled>Beide openen</button><button value="ped" disabled>Loophek openen</button><button value="close" disabled>Sluiten</button><button value="stop" disabled>Stop</button></div></section>
 <div class="side"><section class="card f9card" aria-labelledby="f9title"><div class="line"><h2 id="f9title">Sluitautomaat</h2><span>F9</span></div>
 <button type="button" id="f9toggle" class="f9row" role="switch" aria-label="Automatisch sluiten" aria-checked="false" disabled>
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 .6 6M3 5v5h5M12 7v5l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>

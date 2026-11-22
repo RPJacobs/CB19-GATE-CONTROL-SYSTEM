@@ -25,7 +25,7 @@ For an ESP32 running Tasmota32 with Berry, filesystem, web server and MQTT suppo
 2. In Tasmota open **Tools → Manage File system**, select the file and click **Upload** in the filesystem root.
 3. With the gate stationary and in view, **restart** the ESP. Click **Hekoverzicht** on the Tasmota home page or open `/hek`. Check the reported gate position and **READ DEVINFO**.
 
-The app contains the driver, dashboard and language files. The two-leaf diagram shows the CB19 position. The dashboard opens either the pedestrian gate or both leaves, closes the gate, and controls F9 automatic closing. The language selector remembers the choice in each browser.
+The app contains the driver, dashboard and language files. The two-leaf diagram shows the CB19 position. The dashboard opens either the pedestrian gate or both leaves, closes the gate, stops either opening or closing movement, and controls F9 automatic closing. The language selector remembers the choice in each browser.
 
 ### Upgrade or roll back
 

@@ -135,11 +135,11 @@ class HekOverzicht : Driver
 
   def command(action, token)
     if token != self.token return [403,"Herlaad de pagina."] end
-    var cmd = {"ped":"PED OPEN","both":"FULL OPEN","close":"FULL CLOSE"}.find(action)
+    var cmd = {"ped":"PED OPEN","both":"FULL OPEN","close":"FULL CLOSE","stop":"STOP"}.find(action)
     if cmd == nil return [400,"Onbekende opdracht."] end
     if self.busy() return [409,"De controller verwerkt een instelling of inleeropdracht."] end
     if !self.fresh() return [409,"Wachten op de actuele hekstand."] end
-    if self.cooldown != nil && !tasmota.time_reached(self.cooldown)
+    if cmd != "STOP" && self.cooldown != nil && !tasmota.time_reached(self.cooldown)
       return [409,"De vorige opdracht is zojuist verstuurd."]
     end
     self.cooldown = tasmota.millis(1000)
