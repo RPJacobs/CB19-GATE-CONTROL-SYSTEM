@@ -1,0 +1,31 @@
+name: Publish Tasmota application
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag (for example v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build and verify the application
+        run: python3 app/build.py
+      - name: Publish the versioned download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          gh release create "$VERSION" dist/CB19-Gate.tapp --target "$GITHUB_SHA" \
+            --title "CB19 Gate $VERSION" \
+            --notes 'Download CB19-Gate.tapp under Assets. Upload it through Tasmota → Tools → Manage File system, restart and open Hekoverzicht. For an existing installation with separate Berry files, follow the migration steps in the README first.'
