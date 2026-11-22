@@ -1,0 +1,55 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "CB19-Tor hinzufügen",
+        "data": {
+          "address": "Controlleradresse",
+          "name": "Name",
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      },
+      "confirm": {
+        "title": "Gefundenes Tor bestätigen",
+        "data": {
+          "name": "Name",
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Zugangsdaten aktualisieren",
+        "data": {
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "CB19 nicht erreichbar oder nicht erkannt. Adresse und ESP-App-Version prüfen.",
+      "invalid_auth": "Ungültige Zugangsdaten."
+    },
+    "abort": {
+      "already_configured": "Dieser Controller ist bereits eingerichtet.",
+      "cannot_connect": "CB19 nicht erreichbar oder nicht erkannt. Adresse und ESP-App-Version prüfen.",
+      "invalid_discovery": "Ungültige Geräteankündigung.",
+      "reauth_successful": "Zugangsdaten aktualisiert."
+    }
+  },
+  "entity": {
+    "cover": {
+      "gate": {
+        "name": "Beide Tore"
+      },
+      "pedestrian": {
+        "name": "Gehtor"
+      }
+    },
+    "select": {
+      "delay": {
+        "name": "Automatisch schließen"
+      }
+    }
+  }
+}
