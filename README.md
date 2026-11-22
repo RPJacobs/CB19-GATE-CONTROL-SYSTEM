@@ -109,6 +109,10 @@ MQTT topics and payloads are case-sensitive. When upgrading from the original dr
 
 For a Homebridge garage-door accessory, map current state to `open`, `closed`, `opening`, `closing` and `stopped`. Map target state to `open` and `closed`, and publish the numeric payload for the selected target. Motion feedback uses `INCREASING`, `DECREASING` and `STOPPED`. The legacy pedestrian target alias `/gate/getTargetDoorPState` publishes `Open` and `Closed`.
 
+Both Homebridge door tiles receive confirmed endpoints, including after an MQTT reconnect. A pedestrian-only cycle keeps the large leaf closed. The pedestrian percentage uses 0 when closed and 25 at the open endpoint. A dual movement supplies one combined percentage.
+
+For stop diagnostics, open `/hek-data?stoplog=1` on the ESP. Each entry contains milliseconds since boot and a controller message or local movement command (`TX`). The ESP keeps the latest 24 entries in RAM, records changes of travel state and skips repeated polling replies. Restarting the ESP clears this history. Capture the log after a naturally occurring stop and note what happened. The controller reports `SINGLE STOPPED` and `DUAL STOPPED` for interrupted travel. An obstruction indication in HomeKit needs a separately identified cause and a verified clear signal.
+
 | Other MQTT topics | Payload or result |
 | --- | --- |
 | `/hek/autoclose/cmd` | Send `ON` for F9 = 7 (180 s) or `OFF` for F9 = 0. |
