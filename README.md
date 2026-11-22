@@ -1,8 +1,24 @@
 # CB19 gate control with ESP32 and Tasmota
 
-[gate.be](gate.be) connects a TMT CB19 gate controller to a local MQTT broker and Homebridge. The ESP32 reads the gate position over serial, displays all 19 controller settings and provides controls for pairing a remote and learning gate travel. The TMT CHOW cloud service is optional.
+[gate.be](gate.be) connects a TMT CB19 gate controller to Home Assistant over local HTTP and to Homebridge over MQTT. The ESP32 reads the gate position over serial, displays all 19 controller settings and provides controls for pairing a remote and learning gate travel. The TMT CHOW cloud service is optional.
 
 This driver has been used with Tasmota32 14.4.1 and a CB19 reporting `P190,PS17062E,V0.3` through `READ DEVINFO`. The gate dashboard, controller settings and learning forms are available in Dutch, English and German. The original hardware photos and serial captures are included [below](#hardware-and-protocol-notes).
+
+## Home Assistant via HACS
+
+Install the ESP application and the Home Assistant integration from the same release (v1.1.0 or later). One installation of the integration supports multiple CB19 controllers.
+
+1. In HACS, open the menu → **Custom repositories**. Enter `https://github.com/RPJacobs/CB19-GATE-CONTROL-SYSTEM`, choose **Integration**, then download **CB19 Gate** and restart Home Assistant. For a manual installation, copy `custom_components/cb19_gate` into the matching directory inside your HA configuration folder.
+2. Open **Settings → Devices & services**. Confirm each discovered CB19 and give it a name, for example *Driveway* or *Garden*. Enter the Tasmota web credentials if configured. When multicast cannot cross VLANs, choose **Add integration → CB19 Gate** and enter its hostname or IP address. Manual entries can also accept a new address through discovery.
+3. Each device provides two gate covers (open, close, stop) and a selector for all eight F9 delays and Off. Closing either cover sends the CB19 full-close command. HA verifies the ESP identity before commands. Tasmota MQTT may remain enabled for other clients.
+4. To use the animated card, add `/cb19-gate-card/cb19-gate-card.js` once as a **JavaScript module** in Dashboard Resources. When migrating from the standalone card, replace its existing resource URL. Add a **Manual** card for each gate, selecting the entity ID of its **Both gates** cover from the device page:
+
+   ```yaml
+   type: custom:cb19-gate-card
+   entity: cover.driveway_both_gates
+   ```
+
+The ESP advertises `_cb19-gate._tcp.local.` on port 80. Its Wi-Fi MAC is the device identity and the prefix for its MQTT topics. The HTTP identity response at `/hek-data?identity=1` contains only the product, API version and device ID. The dashboard and command routes use the existing Tasmota web access settings. A firmware build without the Berry mDNS module can still use manual HTTP setup.
 
 ## App screenshots
 
@@ -46,7 +62,7 @@ Edit [nl.json](app/nl.json), [en.json](app/en.json) or [de.json](app/de.json) an
    load("gate.be")
    ```
 
-4. With the gate in sight and the travel area clear, restart the ESP. Open its home page. Under **Gate Percentage**, the **READ DEVINFO** row shows the identity returned by your controller, for example `P190,PS17062E,V0.3`. The ESP requests it when the gate driver is idle and retries after 30 seconds if no valid reply arrives. The settings below start with **F9 Automatisch sluiten**. To refresh the identity manually, run `Hek.send("READ DEVINFO")` in the Berry console. The reply updates the row and also appears on `/hek/serial`.
+4. With the gate in sight and the travel area clear, restart the ESP. Open its home page. Under **Gate Percentage**, the **READ DEVINFO** row shows the identity returned by your controller, for example `P190,PS17062E,V0.3`. The ESP requests it when the gate driver is idle and retries after 30 seconds if no valid reply arrives. The settings below start with **F9 Automatisch sluiten**. To refresh the identity manually, run `Hek.send("READ DEVINFO")` in the Berry console. The reply updates the row and also appears on `cb19/<device-id>/hek/serial`.
 
 For filesystem and startup details, see the [Tasmota Berry documentation](https://tasmota.github.io/docs/Berry/).
 
@@ -97,7 +113,9 @@ The [CB19 control-box manual](CB19U-34100-125-10-C_CB19_manual_std_Wi-Fi_au.pdf)
 
 ## MQTT and Homebridge
 
-MQTT topics and payloads are case-sensitive. When upgrading from the original driver, replace the old `/Gate/set/...`, `/Gate/percentage`, `/Gate/ped_percentage` and `/Gate/serial` mappings with the exact names below. Replace the old `/Gate/set/updown` feedback mapping with the corresponding target door state below. The Berry console instance is now `Hek`.
+In v1.1.0 every topic below is a **suffix**. Prefix each one with `cb19/<device-id>`, where the ID is the full lowercase Wi-Fi MAC without separators, as returned by `/hek-data?identity=1`. For example, an ESP with ID `aabbccddeeff` accepts a full-open payload on `cb19/aabbccddeeff/hek/set/percentage`. Topics and payloads are case-sensitive.
+
+**Migration from v1.0.x:** change the topics on your existing Homebridge accessories, including the F9 on-connect refresh. Prefix both incoming and outgoing topics. Replace the old shared `/test` command topic with `cb19/<device-id>/cmd/move`. The driver ignores all former shared commands. Keep movement messages non-retained, preserve existing accessory IDs and use a distinct Tasmota MQTT Topic and client ID on each ESP. For Homebridge reachability, use each ESP’s own Tasmota LWT topic (normally `tele/<Tasmota Topic>/LWT`, available payload `Online`). Migrate any other MQTT automations at the same time.
 
 | Homebridge mapping | Full gate | Pedestrian gate |
 | --- | --- | --- |
@@ -119,7 +137,7 @@ For stop diagnostics, open `/hek-data?stoplog=1` on the ESP. Each entry contains
 | `/hek/autoclose/state` | Read `ON` for any nonzero F9 delay or `OFF` for zero. |
 | `/hek/autoclose/start` | Publish any payload to request a fresh position and settings report. |
 | `/hek/serial` | Subscribe to read controller replies and events. |
-| `/test` | Accepts `READ DEVINFO`, `READ FUNCTION`, `FULL OPEN`, `PED OPEN`, `FULL CLOSE` and `STOP`. |
+| `/cmd/move` | Accepts `READ DEVINFO`, `READ FUNCTION`, `FULL OPEN`, `PED OPEN`, `FULL CLOSE` and `STOP`. |
 
 ## Hardware and protocol notes
 
