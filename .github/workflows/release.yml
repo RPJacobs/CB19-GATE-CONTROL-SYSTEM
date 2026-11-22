@@ -16,16 +16,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - name: Prepare integration artwork
+        run: |
+          art=custom_components/cb19_gate/brand
+          if ! command -v rsvg-convert >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y librsvg2-bin
+          fi
+          rsvg-convert --width 256 --height 256 --output "$art/icon.png" "$art/icon.svg"
+          if ! git ls-files --error-unmatch "$art/icon.png" >/dev/null 2>&1 || ! git diff --quiet -- "$art/icon.png"; then
+            git add "$art/icon.png"
+            git -c user.name=github-actions -c user.email=41898282+github-actions[bot]@users.noreply.github.com commit -m "Render the CB19 integration icon"
+            git push origin HEAD:main
+          fi
       - name: Build and verify the application
-        run: python3 app/build.py
+        run: |
+          python3 app/build.py
+          python3 -m compileall -q custom_components/cb19_gate
+          zip -qr dist/CB19-Home-Assistant.zip custom_components/cb19_gate -x "*/__pycache__/*" "*.pyc"
+          unzip -tq dist/CB19-Home-Assistant.zip
+
       - name: Publish the versioned download
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
         run: |
           [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
-          gh release create "$VERSION" dist/CB19-Gate.tapp --target "$GITHUB_SHA" \
+          test "v$(jq -r .version custom_components/cb19_gate/manifest.json)" = "$VERSION"
+          gh release create "$VERSION" dist/CB19-Gate.tapp dist/CB19-Home-Assistant.zip --target "$(git rev-parse HEAD)" \
             --title "CB19 Gate $VERSION" \
-            --notes 'Download CB19-Gate.tapp under Assets. Upload it through Tasmota → Tools → Manage File system, restart and open Hekoverzicht. For an existing installation with separate Berry files, follow the migration steps in the README first.'
+            --notes 'Install CB19 Gate from this repository in HACS (Integration), or extract CB19-Home-Assistant.zip in the Home Assistant config directory. Upload CB19-Gate.tapp to the ESP and restart at standstill. Each gate is discovered over mDNS or can be added by address. Upgrading from 1.0.x requires changing the Homebridge/MQTT topics to the per-device prefix documented in the README.'

@@ -84,6 +84,9 @@ class HekOverzicht : Driver
   end
 
   def data()
+    if webserver.has_arg("identity")
+      return self.reply(200,"application/json",json.dump({"product":"cb19-gate","api":1,"id":self.gate.device_id}))
+    end
     if !webserver.check_privileged_access() return end
     var g = self.gate
     if webserver.has_arg("stoplog")
@@ -96,7 +99,7 @@ class HekOverzicht : Driver
       self.next_read = tasmota.millis(5000)
     end
     var result = {"state": self.fresh() ? self.state : nil, "pct":self.pct, "path":self.path,
-                  "token":self.token, "busy":busy}
+                  "token":self.token, "busy":busy, "id":g.device_id, "api":1}
     var valid_f9 = p.values != nil && p.stale_after != nil && !tasmota.time_reached(p.stale_after)
     result["f9"] = valid_f9 ? p.values["9"] : nil
     if !valid_f9 && !busy p.request_refresh(g) end
@@ -154,6 +157,9 @@ class HekOverzicht : Driver
   def submit()
     if !webserver.check_privileged_access() return end
     var result
+    if webserver.has_arg("id") && webserver.arg("id") != self.gate.device_id
+      return self.reply(409,"text/plain","Controller ID mismatch.")
+    end
     var action = webserver.arg("actie")
     if action == "f9"
       result = self.set_f9(webserver.arg("v"),webserver.arg("base"),webserver.arg("token"))

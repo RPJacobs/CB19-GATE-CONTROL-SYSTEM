@@ -1,0 +1,55 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add CB19 gate",
+        "data": {
+          "address": "Controller address",
+          "name": "Name",
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "confirm": {
+        "title": "Confirm discovered gate",
+        "data": {
+          "name": "Name",
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Update web credentials",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach or identify this CB19. Check the address and ESP app version.",
+      "invalid_auth": "Invalid web credentials."
+    },
+    "abort": {
+      "already_configured": "This controller is already configured.",
+      "cannot_connect": "Cannot reach or identify this CB19. Check the address and ESP app version.",
+      "invalid_discovery": "Invalid discovery message.",
+      "reauth_successful": "Credentials updated."
+    }
+  },
+  "entity": {
+    "cover": {
+      "gate": {
+        "name": "Both gates"
+      },
+      "pedestrian": {
+        "name": "Pedestrian gate"
+      }
+    },
+    "select": {
+      "delay": {
+        "name": "Automatic closing"
+      }
+    }
+  }
+}

@@ -537,6 +537,7 @@ var cb19_info = CB19DeviceInfo()
 class HekDriver : Driver
   var ser, rx, discard_line, sent, percentage, readStatus, poll_ticks, settle
   var web_display
+  var device_id, topic_root, announced, network_retry
   var travel, last_state, trace, last_trace_status
   var desired_motion, desired_f9, written_f9, verify_f9, f9_ticks, refresh_ticks
 
@@ -545,12 +546,40 @@ class HekDriver : Driver
     # ESP32 RX=17, TX=16. The gate controller manages its own motor and limits.
     self.ser = serial(17, 16, 9600, serial.SERIAL_8N1)
     tasmota.add_driver(self)
-    for topic : ["/test", "/hek/autoclose/cmd", "/hek/autoclose/start",
-                 "/hek/set/percentage", "/hek/set/ped_percentage"]
-      mqtt.subscribe(topic)
-    end
+    self.network_retry = 0
+    self.setup_network()
     tasmota.add_rule("mqtt#connected", /->self.refresh())
     self.refresh()
+  end
+
+  def setup_network()
+    if self.device_id == nil
+      var mac = tasmota.wifi("mac")
+      if type(mac) != "string" return end
+      mac = string.tolower(string.replace(mac,":",""))
+      if size(mac) != 12 || mac == "000000000000" || mac == "ffffffffffff" return end
+      for i : 0..11
+        if string.find("0123456789abcdef",mac[i]) < 0 return end
+      end
+      self.device_id = mac
+      self.topic_root = "cb19/" + mac
+      for tail : ["/cmd/move","/hek/autoclose/cmd","/hek/autoclose/start",
+                  "/hek/set/percentage","/hek/set/ped_percentage"]
+        mqtt.subscribe(self.topic_root + tail)
+      end
+    end
+    if !tasmota.wifi("up") return end
+    if !self.announced
+      try
+        import mdns
+        mdns.start()
+        mdns.add_service("_cb19-gate","_tcp",80,{"id":self.device_id,"api":"1"},
+                         "CB19 " + self.device_id)
+        self.announced = true
+      except .. as e, msg
+        print("CB19 mDNS: " + str(msg))
+      end
+    end
   end
 
   def reset_state()
@@ -575,7 +604,7 @@ class HekDriver : Driver
   end
 
   def publish(topic, value)
-    mqtt.publish(topic, value)
+    if self.topic_root != nil mqtt.publish(self.topic_root + topic, value) end
   end
 
   def changed(topic, value)
@@ -646,13 +675,15 @@ class HekDriver : Driver
   end
 
   def mqtt_data(topic, idx, value, raw)
+    if self.topic_root == nil || !string.startswith(topic,self.topic_root + "/") return false end
+    topic = topic[size(self.topic_root)..]
     if topic == "/hek/set/percentage"
       if value == "99" || value == "100" self.move("FULL OPEN", false) end
       if value == "0" self.move("FULL CLOSE", false) end
     elif topic == "/hek/set/ped_percentage"
       if value == "25" self.move("PED OPEN", true) end
       if value == "0" self.move("FULL CLOSE", true) end
-    elif topic == "/test"
+    elif topic == "/cmd/move"
       if value == "FULL OPEN" || value == "FULL CLOSE" || value == "PED OPEN" || value == "STOP"
         self.move(value, value == "PED OPEN")
       elif value == "READ FUNCTION" || value == "READ DEVINFO"
@@ -895,6 +926,14 @@ class HekDriver : Driver
   end
 
   def every_second()
+    if !self.announced
+      if self.network_retry <= 0
+        self.setup_network()
+        self.network_retry = 30
+      else
+        self.network_retry -= 1
+      end
+    end
     if self.ser.available() self.processMSG(self.ser.read()) end
     var read_functions = false
     if self.refresh_ticks > 0
