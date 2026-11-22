@@ -55,7 +55,7 @@ window.GateI18n=(()=>{
     if(files.has(code))return files.get(code);
     const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),5500);
     try{
-      const res=await fetch('/'+code+'.json',{signal:abort.signal,mode:'same-origin'});
+      const res=await fetch('/hek?bestand='+code+'.json',{signal:abort.signal,mode:'same-origin'});
       if(!res.ok)throw Error('language');
       const data=await res.json();
       if(!data||typeof data!=='object'||!['Toegangshek','Taal','Hek gesloten','Automatisch sluiten'].every(k=>typeof data[k]==='string')||!Object.values(data).every(v=>typeof v==='string'))throw Error('language');
