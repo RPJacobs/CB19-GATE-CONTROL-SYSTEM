@@ -72,20 +72,8 @@ class HekOverzicht : Driver
     return self.learn.phase != nil || self.panel.phase != nil || self.gate.f9_ticks != 0
   end
 
-  # A pedestrian cycle moves the short leaf only. Remember it if it closes
-  # with FULL CLOSING or if a full opening follows the pedestrian endpoint.
   def observe(state, pct)
-    import string
-    if state == "FULL CLOSED" || state == "PED CLOSED" || state == "FULL OPENED"
-      self.path = "both"
-    elif string.startswith(state,"PED ") || state == "SINGLE STOPPED"
-      self.path = "single"
-    elif state == "FULL OPENING" && self.path != "from_ped"
-      var was_open = self.state == "PED OPENED" || (self.state == "SINGLE STOPPED" && self.pct == 25)
-      self.path = was_open ? "from_ped" : "both"
-    elif state == "FULL CLOSING" && self.path == "from_ped"
-      self.path = "both"
-    end
+    self.path = self.gate.travel
     self.state = state
     self.pct = pct
     self.valid_until = tasmota.millis(14000)
@@ -98,6 +86,9 @@ class HekOverzicht : Driver
   def data()
     if !webserver.check_privileged_access() return end
     var g = self.gate
+    if webserver.has_arg("stoplog")
+      return self.reply(200,"application/json",json.dump({"events":g.trace}))
+    end
     var p = self.panel
     var busy = self.busy()
     if !busy && !g.readStatus && g.refresh_ticks == 0 && (self.next_read == nil || tasmota.time_reached(self.next_read))
