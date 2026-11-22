@@ -4,6 +4,8 @@
 
 This driver has been used with Tasmota32 14.4.1 and a CB19 reporting `P190,PS17062E,V0.3` through `READ DEVINFO`. The gate dashboard, controller settings and learning forms are available in Dutch, English and German. The original hardware photos and serial captures are included [below](#hardware-and-protocol-notes).
 
+For Apple Home, follow the [Homebridge installation and upgrade guide](#mqtt-and-homebridge).
+
 ## Home Assistant via HACS
 
 Install the ESP application and the Home Assistant integration from the same release (v1.1.0 or later). One installation of the integration supports multiple CB19 controllers.
@@ -113,9 +115,121 @@ The [CB19 control-box manual](CB19U-34100-125-10-C_CB19_manual_std_Wi-Fi_au.pdf)
 
 ## MQTT and Homebridge
 
-In v1.1.0 every topic below is a **suffix**. Prefix each one with `cb19/<device-id>`, where the ID is the full lowercase Wi-Fi MAC without separators, as returned by `/hek-data?identity=1`. For example, an ESP with ID `aabbccddeeff` accepts a full-open payload on `cb19/aabbccddeeff/hek/set/percentage`. Topics and payloads are case-sensitive.
+The v1.1.0 ESP application gives each controller its own MQTT topics. Homebridge Easy MQTT connects directly to your broker and exposes three accessories in Apple Home. Home Assistant is optional.
 
-**Migration from v1.0.x:** change the topics on your existing Homebridge accessories, including the F9 on-connect refresh. Prefix both incoming and outgoing topics. Replace the old shared `/test` command topic with `cb19/<device-id>/cmd/move`. The driver ignores all former shared commands. Keep movement messages non-retained, preserve existing accessory IDs and use a distinct Tasmota MQTT Topic and client ID on each ESP. For Homebridge reachability, use each ESP’s own Tasmota LWT topic (normally `tele/<Tasmota Topic>/LWT`, available payload `Online`). Migrate any other MQTT automations at the same time.
+| Apple Home accessory | What it controls |
+| --- | --- |
+| Both gates | Opens both leaves. Closing sends the controller’s full-close command. |
+| Pedestrian gate | Opens the pedestrian leaf. Closing **also closes the whole gate**, including the large leaf if it is open. |
+| Automatic closing (F9) | Switching on sets the delay to **3 minutes**. Switching off disables automatic closing. If you set another delay on the dashboard, the switch shows **On** for any nonzero delay. |
+
+### 1. Collect the values for your controller
+
+Install the [Tasmota dashboard](#install-the-dashboard-on-tasmota32) or [standalone driver](#standalone-driver-installation) from v1.1.0 or later. In Tasmota, open **Configuration → Configure MQTT** and connect the ESP to your MQTT broker. Use the following values throughout the example.
+
+| Replace in the example | Where to find your value |
+| --- | --- |
+| `mqtt://mqtt.example.org:1883` | Use your broker’s URL and port as reachable from Homebridge. Configure the same broker on the ESP. If it requires a login, enter the broker username and password in each accessory’s MQTT settings. |
+| `aabbccddeeff` | Open `/hek-data?identity=1` on the ESP and copy the `id` field. With the standalone driver, run `Status 5` in the Tasmota console and take `StatusNET.Mac` in lowercase without colons. The ID stays the same when DHCP changes the ESP’s IP. |
+| `tele/DrivewayGate/LWT` | Use the ESP’s actual availability topic. With the default Tasmota FullTopic, this is `tele/<Tasmota Topic>/LWT`. Copy **Topic** from Configure MQTT, preserving capitalization. If you customized **FullTopic**, use its corresponding telemetry path. The online payload is `Online`. |
+
+For a second controller, use its own device ID, Tasmota **Topic** and MQTT **Client** ID. Give its three Homebridge accessories distinct names and `info.id` values. Both controllers can share the same broker.
+
+### 2. Configure Homebridge Easy MQTT
+
+1. In **Homebridge UI → Plugins**, install **Homebridge Easy MQTT** (`homebridge-easy-mqtt`). The example uses the configuration format of version 2.2.1.
+2. Open **JSON Config**. For a new Easy MQTT setup, add the object below to the existing top-level `platforms` array. If Easy MQTT already serves other devices, merge just these three entries into its `accessories` array. If your gate already has tiles, [update them in place](#upgrade-existing-homebridge-accessories).
+3. Replace the example broker, device ID and availability topic throughout. Keep the expressions after `|` on the two outgoing door topics. They convert HomeKit’s `open` and `closed` into the numeric payloads the controller accepts. Leave MQTT **retain off** for movement commands so reconnecting cannot replay an earlier command.
+4. Save and restart the Homebridge instance running Easy MQTT, or its child bridge if configured. If the bridge is already paired, open Apple Home to see the accessories. On a new installation, choose **Add Accessory** in Apple Home and scan the QR code for the bridge running Easy MQTT.
+
+```json
+{
+  "platform": "HomebridgeEasyMQTT",
+  "name": "HomebridgeEasyMQTT",
+  "accessories": [
+    {
+      "info": { "id": "driveway-both", "name": "Driveway gate", "type": "GarageDoorOpener" },
+      "mqtt": { "broker": "mqtt://mqtt.example.org:1883" },
+      "topicGetCurrentDoorState": "cb19/aabbccddeeff/gate/getCurrentDoorState",
+      "topicGetTargetDoorState": "cb19/aabbccddeeff/gate/getTargetDoorState",
+      "topicSetTargetDoorState": "cb19/aabbccddeeff/hek/set/percentage|value === 'open' ? 100 : value === 'closed' ? 0 : undefined",
+      "valueDoorStateOpen": "open",
+      "valueDoorStateClosed": "closed",
+      "valueDoorStateOpening": "opening",
+      "valueDoorStateClosing": "closing",
+      "valueDoorStateStopped": "stopped",
+      "topicGetAvailable": "tele/DrivewayGate/LWT",
+      "valueAvailable": "Online"
+    },
+    {
+      "info": { "id": "driveway-ped", "name": "Driveway pedestrian gate", "type": "GarageDoorOpener" },
+      "mqtt": { "broker": "mqtt://mqtt.example.org:1883" },
+      "topicGetCurrentDoorState": "cb19/aabbccddeeff/gate/getCurrentPedState",
+      "topicGetTargetDoorState": "cb19/aabbccddeeff/gate/getTargetPedState",
+      "topicSetTargetDoorState": "cb19/aabbccddeeff/hek/set/ped_percentage|value === 'open' ? 25 : value === 'closed' ? 0 : undefined",
+      "valueDoorStateOpen": "open",
+      "valueDoorStateClosed": "closed",
+      "valueDoorStateOpening": "opening",
+      "valueDoorStateClosing": "closing",
+      "valueDoorStateStopped": "stopped",
+      "topicGetAvailable": "tele/DrivewayGate/LWT",
+      "valueAvailable": "Online"
+    },
+    {
+      "info": { "id": "driveway-autoclose", "name": "Driveway automatic closing", "type": "Switch" },
+      "mqtt": {
+        "broker": "mqtt://mqtt.example.org:1883",
+        "onConnect": [
+          { "topic": "cb19/aabbccddeeff/hek/autoclose/start", "message": "status" }
+        ]
+      },
+      "topicGetOn": "cb19/aabbccddeeff/hek/autoclose/state",
+      "topicSetOn": "cb19/aabbccddeeff/hek/autoclose/cmd",
+      "valueOn": "ON",
+      "valueOff": "OFF",
+      "topicGetAvailable": "tele/DrivewayGate/LWT",
+      "valueAvailable": "Online"
+    }
+  ]
+}
+```
+
+### Upgrade existing Homebridge accessories
+
+An ESP upgraded from v1.0.x to v1.1.0 stops publishing and listening on the old shared gate topics. Update every client that uses those topics, including MQTT automations. If your three Easy MQTT accessories already match the example for your own ESP, the migration is complete.
+
+| Existing configuration | Change for v1.1.0 |
+| --- | --- |
+| Reads on `/gate/…` or `/hek/…` and writes on `/hek/…` | Add `cb19/<device-id>` before each suffix for both doors and F9. The full topic starts with `cb19/` and is case-sensitive. |
+| F9 refresh on connection | Change the topic inside `mqtt.onConnect` to `cb19/<device-id>/hek/autoclose/start`. The `status` message requests fresh position and F9 reports. |
+| Raw commands on `/test` | Move clients that send commands such as `FULL OPEN` or `STOP` to `cb19/<device-id>/cmd/move`. The two Easy MQTT door accessories above use the numeric command topics. |
+| Availability on the three accessories | Set each `topicGetAvailable` to the ESP’s Tasmota LWT topic. It follows the Tasmota topic layout independently of the CB19 device prefix. |
+
+Back up your Homebridge configuration before editing. Keep the existing bridge pairing and each Easy MQTT accessory’s `info.id`, type and name. Editing these mappings in place keeps the same accessory identities for existing rooms, scenes and automations. If you are switching from **MQTTthing** to **Easy MQTT** as well, these plugins have different configuration formats. Check the new tiles and their scene and automation assignments in Apple Home before removing the old accessories.
+
+### Verify without moving the gate
+
+In **Homebridge UI → Accessories**, check that both door states and the F9 switch agree with the ESP dashboard. To verify the MQTT path independently, substitute your broker and controller values below. With Mosquitto clients installed, run this subscription first and leave it open.
+
+```sh
+mosquitto_sub -h mqtt.example.org -p 1883 -v \
+  -t 'tele/DrivewayGate/LWT' \
+  -t 'cb19/aabbccddeeff/gate/+' \
+  -t 'cb19/aabbccddeeff/hek/autoclose/state'
+```
+
+From a second terminal, request a fresh report. This only reads the controller’s position and settings.
+
+```sh
+mosquitto_pub -h mqtt.example.org -p 1883 \
+  -t 'cb19/aabbccddeeff/hek/autoclose/start' -m status
+```
+
+Use your broker’s usual authentication and TLS options if required. For a fully closed gate, look for `closed` on both `getCurrentDoorState` and `getCurrentPedState`. The F9 response is `ON` or `OFF`. If Apple Home shows **No Response**, check the broker connection and the exact LWT topic and payload. If LWT is `Online` but the states stay stale, compare the device ID in the subscription and refresh topic, then check the position in the ESP dashboard. If state updates work but opening from Apple Home does not, check the outgoing topic and its numeric conversion against the example.
+
+### MQTT topic reference
+
+The entries below are **suffixes**. Prepend `cb19/<device-id>` to each one. The Easy MQTT plugin also documents its [garage door settings](https://github.com/mpatfield/homebridge-easy-mqtt/wiki/GarageDoorOpener) and [MQTT connection settings](https://github.com/mpatfield/homebridge-easy-mqtt/wiki/MQTT-Setup).
 
 | Homebridge mapping | Full gate | Pedestrian gate |
 | --- | --- | --- |
