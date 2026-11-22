@@ -883,7 +883,7 @@ class HekDriver : Driver
 
   def language_script()
     if self.web_display != nil
-      webserver.content_send("<script defer src='/hek-taal.js'></script>")
+      webserver.content_send("<script defer src='/hek?bestand=hek-taal.js'></script>")
     end
   end
 
