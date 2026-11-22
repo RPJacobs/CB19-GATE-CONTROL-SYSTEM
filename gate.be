@@ -537,7 +537,8 @@ var cb19_info = CB19DeviceInfo()
 class HekDriver : Driver
   var ser, rx, discard_line, sent, percentage, readStatus, poll_ticks, settle
   var web_display
-  var desired_motion, ped_active, desired_f9, written_f9, verify_f9, f9_ticks, refresh_ticks
+  var travel, last_state, trace, last_trace_status
+  var desired_motion, desired_f9, written_f9, verify_f9, f9_ticks, refresh_ticks
 
   def init()
     self.reset_state()
@@ -561,7 +562,8 @@ class HekDriver : Driver
     self.settle = 0
     self.f9_ticks = 0
     self.verify_f9 = false
-    self.ped_active = false
+    self.travel = "both"
+    self.trace = []
     self.refresh_ticks = 0
   end
 
@@ -604,6 +606,13 @@ class HekDriver : Driver
     end
   end
 
+  def endpoint(ped, opened)
+    var state = opened ? "open" : "closed"
+    var position = opened ? (ped ? "25" : "100") : "0"
+    self.target(ped,state)
+    self.report(ped,state,position)
+  end
+
   def poll()
     if !self.readStatus
       self.readStatus = true
@@ -624,10 +633,12 @@ class HekDriver : Driver
     self.readStatus = true
     self.settle = 3
     self.desired_motion = nil
+    self.last_trace_status = nil
+    self.trace_line("TX " + command)
     if command != "STOP"
       self.desired_motion = command == "FULL CLOSE" ? "closed" : "open"
       self.target(ped, self.desired_motion)
-      if command == "FULL CLOSE" && self.ped_active
+      if command == "FULL CLOSE" && self.travel == "single"
         self.target(true, "closed")
       end
     end
@@ -701,47 +712,62 @@ class HekDriver : Driver
         return
       end
     end
+    if closed || k == "FULL OPENED"
+      self.travel = "both"
+    elif string.startswith(k,"PED ") || k == "SINGLE STOPPED"
+      self.travel = "single"
+    elif k == "FULL OPENING" && self.travel != "from_ped"
+      var ped_open = self.last_state == "PED OPENED" || (self.last_state == "SINGLE STOPPED" && self.percentage == "25")
+      self.travel = ped_open ? "from_ped" : "both"
+    elif k == "FULL CLOSING" && self.travel == "from_ped"
+      self.travel = "both"
+    end
+    self.last_state = k
     self.percentage = pos
+
+    # The board reports one travel percentage. Only publish a second numeric
+    # position when it follows from a confirmed single-leaf path or endpoint.
     if moving
       self.settle = 0
       self.poll()
-      var ped = string.startswith(k, "PED ")
       var opening = k == "FULL OPENING" || k == "PED OPENING"
       var state = opening ? "opening" : "closing"
       var dest = opening ? "open" : "closed"
-      if ped self.ped_active = true end
-      self.target(ped, dest)
-      self.report(ped, state, pos)
-      if !ped && !opening && self.ped_active
-        self.target(true, "closed")
-        self.report(true, "closing", nil)
+      if self.travel == "single"
+        self.endpoint(false,false)
+        self.target(true,dest)
+        self.report(true,state,pos)
+      else
+        self.target(false,dest)
+        self.report(false,state,pos)
+        if self.travel == "from_ped"
+          self.endpoint(true,true)
+        else
+          self.target(true,dest)
+          self.report(true,state,nil)
+        end
       end
     else
       self.readStatus = false
       self.settle = 0
       self.desired_motion = nil
-      if closed
-        self.ped_active = false
-        self.target(true, "closed")
-        self.report(true, "closed", "0")
-        if k == "FULL CLOSED"
-          self.target(false, "closed")
-          self.report(false, "closed", "0")
-        end
-      elif k == "FULL OPENED"
-        self.target(false, "open")
-        self.report(false, "open", "100")
-      elif ped_end
-        self.ped_active = true
-        if k == "PED OPENED" || pct == 25
-          self.target(true, "open")
-          self.report(true, "open", pos)
+      if closed || k == "FULL OPENED"
+        self.endpoint(false,!closed)
+        self.endpoint(true,!closed)
+      elif self.travel == "single"
+        self.endpoint(false,false)
+        if k == "PED OPENED" || (k == "SINGLE STOPPED" && pct == 25)
+          self.endpoint(true,true)
         else
-          self.report(true, "stopped", pos)
+          self.report(true,"stopped",pos)
         end
       else
-        self.report(false, "stopped", pos)
-        if self.ped_active self.report(true, "stopped", pos) end
+        self.report(false,"stopped",pos)
+        if self.travel == "from_ped"
+          self.endpoint(true,true)
+        else
+          self.report(true,"stopped",nil)
+        end
       end
     end
     cb19_panel.position(moving)
@@ -798,9 +824,33 @@ class HekDriver : Driver
     self.send(fields.concat(",") + ";" + halves[1])
   end
 
+  # Keep the most recent controller events in RAM across dashboard refreshes.
+  def trace_line(msg)
+    if size(self.trace) >= 24 self.trace.remove(0) end
+    self.trace.push([tasmota.millis(),msg[0..159]])
+  end
+
+  def trace_rx(msg)
+    if string.startswith(msg,"ACK STATUS:")
+      var key = msg
+      var fields = string.split(msg[11..-1],",")
+      if size(fields) == 2 && self.digits(fields[1]) &&
+         (string.endswith(fields[0]," OPENING") || string.endswith(fields[0]," CLOSING"))
+        key = fields[0]
+      end
+      if key == self.last_trace_status return end
+      self.last_trace_status = key
+    elif string.startswith(msg,"ACK READ FUNCTION,") || string.startswith(msg,"ACK FUNCTION,") ||
+         string.startswith(msg,"ACK READ DEVINFO:") || string.startswith(msg,"ACK READ LEARN STATUS:")
+      return
+    end
+    self.trace_line(msg)
+  end
+
   def line(msg)
     print(msg)
     self.publish("/hek/serial", msg)
+    self.trace_rx(msg)
     if string.startswith(msg, "ACK READ DEVINFO:")
       cb19_info.receive(msg)
     elif string.startswith(msg, "ACK STATUS:")
