@@ -46,6 +46,7 @@ class CB19Learn : Driver
     var k = webserver.arg("k")
     webserver.content_start("CB19 inleren")
     webserver.content_send_style()
+    self.gate.language_script()
     if self.phase == nil && (k == "ab" || k == "hek")
       if k == "hek"
         webserver.content_send("<h3>Hek inleren</h3><p>De CB19 beweegt de vleugels om de slag te leren. Houd de doorgang vrij en blijf bij het hek.</p>")
@@ -76,8 +77,9 @@ class CB19Learn : Driver
     if !webserver.check_privileged_access() return end
     var k = webserver.arg("k")
     if !self.tokens.contains(k) || webserver.arg("token") != self.tokens[k]
-      webserver.content_open(403,"text/plain")
-      webserver.content_send("Formulier verlopen. Open de inleerpagina opnieuw.")
+      webserver.content_open(403,"text/html; charset=utf-8")
+      webserver.content_send("<p>Formulier verlopen. Open de inleerpagina opnieuw.</p>")
+      self.gate.language_script()
       webserver.content_close()
       return
     end
@@ -89,6 +91,7 @@ class CB19Learn : Driver
       if err != nil
         webserver.content_start("CB19 inleren")
         webserver.content_send_style()
+        self.gate.language_script()
         webserver.content_send("<p>" + err + "</p><p><a href='/inleren'>Naar de inleerstatus</a></p>")
         webserver.content_stop()
         return
@@ -302,6 +305,7 @@ class CB19Panel : Driver
     if !self.by_key.contains(key) key = "9" end
     webserver.content_start("CB19-instellingen")
     webserver.content_send_style()
+    self.driver.language_script()
     if self.phase != nil
       webserver.content_send("<p role='status'>Wijziging in behandeling. De controller wordt uitgelezen.</p><script>setTimeout(()=>location.reload(),1800)</script>")
     elif self.notice != nil
@@ -344,8 +348,9 @@ class CB19Panel : Driver
   def submit()
     if !webserver.check_privileged_access() return end
     if webserver.arg("token") != self.token
-      webserver.content_open(403,"text/plain")
-      webserver.content_send("Dit formulier is verlopen. Open de instellingen opnieuw.")
+      webserver.content_open(403,"text/html; charset=utf-8")
+      webserver.content_send("<p>Dit formulier is verlopen. Open de instellingen opnieuw.</p>")
+      self.driver.language_script()
       webserver.content_close()
       return
     end
@@ -354,6 +359,7 @@ class CB19Panel : Driver
     if message != nil
       webserver.content_start("CB19-instellingen")
       webserver.content_send_style()
+      self.driver.language_script()
       webserver.content_send("<p>" + message + "</p><p><a href='/cb19'>Terug naar de instellingen</a></p>")
       webserver.content_stop()
       return
@@ -530,6 +536,7 @@ var cb19_info = CB19DeviceInfo()
 
 class HekDriver : Driver
   var ser, rx, discard_line, sent, percentage, readStatus, poll_ticks, settle
+  var web_display
   var desired_motion, ped_active, desired_f9, written_f9, verify_f9, f9_ticks, refresh_ticks
 
   def init()
@@ -738,6 +745,7 @@ class HekDriver : Driver
       end
     end
     cb19_panel.position(moving)
+    if self.web_display != nil self.web_display.observe(k,pct) end
   end
 
   # Only act on complete settings frames from our controller.
@@ -871,6 +879,12 @@ class HekDriver : Driver
       end
     end
     cb19_info.read_if_due(self)
+  end
+
+  def language_script()
+    if self.web_display != nil
+      webserver.content_send("<script defer src='/hek-taal.js'></script>")
+    end
   end
 
   def web_sensor()
