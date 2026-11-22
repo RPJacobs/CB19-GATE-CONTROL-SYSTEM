@@ -4,6 +4,17 @@
 
 This driver has been used with Tasmota32 14.4.1 and a CB19 reporting `P190,PS17062E,V0.3` through `READ DEVINFO`. The gate dashboard, controller settings and learning forms are available in Dutch, English and German. The original hardware photos and serial captures are included [below](#hardware-and-protocol-notes).
 
+## App screenshots
+
+![Gate dashboard showing both leaves closed, the pedestrian and full-gate controls, and a three-minute automatic closing delay](https://github.com/user-attachments/assets/a86f3b26-dbe5-4024-803b-12b7cf3dac7e)
+
+<details>
+<summary>View all 19 CB19 controller settings</summary>
+
+![Expanded controller card showing the decoded F1–FJ settings alongside their raw CB19 values](https://github.com/user-attachments/assets/858b9b2c-666a-412a-b91b-abf3e919dd5d)
+
+</details>
+
 ## Install the dashboard on Tasmota32
 
 [**Download CB19-Gate.tapp**](https://github.com/RPJacobs/CB19-GATE-CONTROL-SYSTEM/releases/latest/download/CB19-Gate.tapp) · [All releases](https://github.com/RPJacobs/CB19-GATE-CONTROL-SYSTEM/releases)
