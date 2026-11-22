@@ -1,0 +1,204 @@
+<!doctype html><html lang="nl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101113"><title>Toegangshek · CB19</title>
+<style>
+:root{color-scheme:dark;--edge:#2c2d31;--muted:#b4b2b4;--gold:#ffd1a3;--blue:#8cd2df}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;color:#f4f1eb;background:radial-gradient(ellipse at 11% 0,#231d1a,transparent 46%),#101113;font:16px Inter,-apple-system,system-ui,"Segoe UI",sans-serif}
+main{max-width:970px;margin:auto;padding:clamp(24px,5vw,62px) clamp(14px,4vw,40px) max(32px,env(safe-area-inset-bottom))}
+header,.line,summary{display:flex;align-items:center;justify-content:space-between;gap:12px}header{margin-bottom:26px}
+h1,h2,p,dl,dd{margin:0}h1{display:flex;align-items:center;gap:12px;font-size:clamp(1.8rem,4vw,2.44rem);letter-spacing:-.065em}h1 svg{width:32px;color:#dfb384}
+a{color:var(--gold);text-underline-offset:3px}header a{font-size:.83rem;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;align-items:start}
+.card{min-width:0;background:#18191c;border:1px solid var(--edge);border-radius:21px;padding:clamp(17px,3vw,28px)}
+h2,summary{font-size:1.05rem;font-weight:660;letter-spacing:-.035em}.line span,dt,small{color:var(--muted);font-size:.82rem}
+.hero{background:linear-gradient(160deg,#201d1c,#18191c 68%)}
+.reading{display:flex;align-items:center;gap:8px}.reading b{border-left:1px solid #49423e;padding-left:8px;font-size:.85rem;color:var(--gold);font-variant-numeric:tabular-nums}
+figure{margin:20px 0 24px}#gate{display:block;width:100%;height:auto}
+.leaf{transition:transform 1s ease-in-out}#gate[data-unknown] .leaf{visibility:hidden}
+.actions{display:grid;grid-template-columns:1fr 1.17fr .8fr;gap:8px;border-top:1px solid var(--edge);padding-top:17px}
+button{font:650 .9rem Inter,system-ui,sans-serif;min-height:45px;padding:7px 9px;cursor:pointer;border-radius:13px;border:1px solid #48464a;background:#28282b;color:#eeeae5}
+button[value=both]{color:var(--gold);background:#372920;border-color:#73543c}button[value=ped]{color:#a9dce4;background:#203138;border-color:#38555d}
+button:disabled{opacity:.48;cursor:default}button:not(:disabled):hover{filter:brightness(1.17)}:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+#feedback:not(:empty){font-size:.85rem;margin-top:12px;color:var(--gold)}.data{margin:12px 0}.data div,#rows div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-top:1px solid var(--edge);padding:12px 0}dd{text-align:right;overflow-wrap:anywhere;font-size:.86rem}
+details{border-top:1px solid var(--edge);padding:12px 0}details:last-child{padding-bottom:0}summary{cursor:pointer;list-style:none;font-size:.9rem}summary::-webkit-details-marker{display:none}summary::after{content:'⌄';color:var(--muted)}details[open]>summary::after{transform:rotate(180deg)}
+#rows{margin-top:10px}nav{display:grid;gap:12px;padding:14px 0 2px;font-size:.9rem}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.grid{gap:12px}header{margin-bottom:16px}figure{margin:14px 0 18px}}
+@media(prefers-reduced-motion:reduce){.leaf{transition:none}}
+
+.side{display:grid;gap:16px;min-width:0}
+.f9card{padding:16px clamp(16px,2.2vw,22px)}
+.f9row{display:flex;align-items:center;gap:10px;width:100%;margin:8px 0;padding:8px 10px;text-align:left;background:#252322;border:1px solid #49413c;border-radius:15px}
+.f9row svg{flex:none;width:34px;height:34px;border-radius:50%;padding:8px;background:#3b3029;stroke:#e9bc90;fill:none;stroke-width:1.8}
+.f9row strong{display:block;font-size:.94rem}.f9row small{display:block;margin-top:3px;font-weight:450}
+.track{position:relative;flex:none;margin-left:auto;width:40px;height:23px;border-radius:14px;background:#4c4a4d}.track::after{content:'';position:absolute;inset:3px auto auto 3px;width:17px;height:17px;border-radius:50%;background:#dedbd9;transition:transform .16s}
+[aria-checked=true] .track{background:#a7754b}[aria-checked=true] .track::after{transform:translateX(17px);background:#fff1df}
+.waitline{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.88rem}
+select{min-height:40px;max-width:60%;color:#f4f1eb;background:#242428;border:1px solid #464348;border-radius:9px;padding:6px 10px;font:inherit}
+#f9note:not(:empty){margin-top:10px;font-size:.8rem;color:var(--gold)}@media(prefers-reduced-motion:reduce){.track::after{transition:none}}
+@media(min-width:701px){
+  .grid:not(:has(details[open])){align-items:stretch}
+  .side{grid-template-rows:auto 1fr}
+  .hero{display:flex;flex-direction:column}
+  .hero figure{margin:auto 0;padding:20px 0 24px}
+}
+header{flex-wrap:wrap}.langtools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#locale{max-width:none;min-height:34px;font-size:.84rem}#langError:empty{display:none}
+</style>
+<main id="keys"><header><h1><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 26V7m28 19V7M5 23V11l13-4v16zm16 0V8l6 3v12zM9 11v11m5-13v13"/></svg>Toegangshek</h1><div class="langtools"><select id="locale" aria-label="Taal"></select><a href="/">Tasmota</a><small id="langError" role="status"></small></div></header>
+<div class="grid"><section class="card hero"><div class="line"><h2>Hekstand</h2><div class="reading"><span id="state" role="status">Stand ophalen…</span><b id="pct">—</b></div></div>
+<figure><svg id="gate" data-unknown viewBox="0 0 440 184" role="img" aria-label="Vooraanzicht van het grote hek links en het loophek rechts">
+<defs>
+<pattern id="bars" width="14" height="114" patternUnits="userSpaceOnUse"><path d="M3 0h6v114H3z" fill="currentColor"/><path d="M4 0v114" stroke="#fff" stroke-opacity=".28"/></pattern>
+<linearGradient id="post"><stop stop-color="#424448"/><stop offset=".55" stop-color="#757273"/><stop offset=".6" stop-color="#464649"/><stop offset="1" stop-color="#323438"/></linearGradient>
+<linearGradient id="drive" x2="0" y2="1"><stop stop-color="#27272a"/><stop offset="1" stop-color="#1c1c1f"/></linearGradient></defs>
+<path d="M80 99h280l72 74H8z" fill="url(#drive)"/><path d="M4 166h432" stroke="#555053"/>
+<path d="M0 99h34v62H0m440-62h-34v62h34" fill="#27282b" stroke="#47464a"/>
+<g transform="translate(38 149)"><g id="left" class="leaf" color="#c9a180">
+<rect y="-94" width="240" height="96" fill="url(#bars)"/>
+<path d="M0 -94h240v96H0z M0 -78h240M0 -11h240" fill="none" stroke="currentColor" stroke-width="4"/>
+</g></g>
+<g transform="translate(402 149)"><g id="right" class="leaf" color="#96bfc1">
+<rect x="-118" y="-94" width="118" height="96" fill="url(#bars)"/>
+<path d="M-118 -94H0v96h-118z M-118 -78H0M-118 -11H0" fill="none" stroke="currentColor" stroke-width="4"/>
+<path d="M-115 -42h12" stroke="#e1e5de" stroke-width="4" stroke-linecap="round"/></g></g>
+<g fill="url(#post)" stroke="#817a73"><rect x="27" y="38" width="12" height="127" rx="1"/><rect x="401" y="38" width="12" height="127" rx="1"/></g>
+<path d="M25 38h16m358 0h16" stroke="#bab1a6" stroke-width="4"/><path d="M33 71h8m-8 60h8m358-60h8m-8 60h8" stroke="#827b73" stroke-width="4"/></svg>
+</figure>
+<div class="actions" role="group" aria-label="Hekbediening"><button value="both" disabled>Beide openen</button><button value="ped" disabled>Loophek openen</button><button value="close" disabled>Sluiten</button></div><p id="feedback" role="status"></p></section>
+<div class="side"><section class="card f9card" aria-labelledby="f9title"><div class="line"><h2 id="f9title">Sluitautomaat</h2><span>F9</span></div>
+<button type="button" id="f9toggle" class="f9row" role="switch" aria-label="Automatisch sluiten" aria-checked="false" disabled>
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 .6 6M3 5v5h5M12 7v5l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<span><strong>Automatisch sluiten</strong><small id="f9state">Ophalen…</small></span><i class="track" aria-hidden="true"></i></button>
+<label class="waitline" for="f9time">Wachttijd<select id="f9time" disabled><option value="1">3 seconden</option><option value="2">10 seconden</option><option value="3">20 seconden</option><option value="4">40 seconden</option><option value="5">1 minuut</option><option value="6">2 minuten</option><option value="7">3 minuten</option><option value="8">5 minuten</option></select></label><p id="f9note" role="status"></p></section>
+<section class="card"><h2>Controller</h2><dl class="data"><div><dt>READ DEVINFO</dt><dd id="dev">—</dd></div></dl>
+<details><summary>Alle CB19-instellingen</summary><small id="age"></small><dl id="rows"></dl></details><details><summary>Beheer</summary><nav><a href="/cb19">Instellingen wijzigen</a><a href="/inleren?k=ab">Afstandsbediening inleren</a><a href="/inleren?k=hek">Hek inleren</a><a href="/inleren">Inleerstatus</a></nav></details></section></div></div>
+<noscript>Schakel JavaScript in voor de hekbediening.</noscript></main>
+<script src="/hek-taal.js"></script>
+<script>
+'use strict';
+const {say,put}=GateI18n;
+const el=id=>document.getElementById(id);
+const labels={'FULL CLOSED':'closed','PED CLOSED':'closed','FULL OPENED':'open','PED OPENED':'pedOpen','PED OPENING':'pedOpening','PED CLOSING':'pedClosing','FULL OPENING':'opening','FULL CLOSING':'closing','DUAL STOPPED':'stopped','SINGLE STOPPED':'pedStopped'};
+let token='',ready=false,sending=false,reading=false,timer,nextInfo=0;
+function lock(){for(const b of el('keys').querySelectorAll('.actions button'))b.disabled=!ready||sending;paintF9()}
+const toggle=el('f9toggle'), delaySelect=el('f9time'), f9note=el('f9note');
+let actualF9=null, lastDelay='7', pendingF9=null, moving=false;
+try{const v=localStorage.getItem('cb19-f9-delay');if(/^[1-8]$/.test(v))lastDelay=v}catch{}
+function remember(v){
+  if(lastDelay===v)return;
+  lastDelay=v;try{localStorage.setItem('cb19-f9-delay',v)}catch{}
+}
+function paintF9(){
+  const known=actualF9!==null,on=known&&Number(actualF9)>0;
+  toggle.setAttribute('aria-checked',String(on));
+  toggle.disabled=delaySelect.disabled=!ready||!known||moving||sending||!!pendingF9;
+  say(el('f9state'),known?(on?'on':'off'):'unknown');
+  delaySelect.value=pendingF9&&pendingF9.value!=='0'?pendingF9.value:on?String(Number(actualF9)):lastDelay;
+}
+function receiveF9(d,watch){
+  actualF9=d.f9!=null&&/^0*[0-8]$/.test(String(d.f9))?String(d.f9):null;
+  moving=/OPENING|CLOSING/.test(d.state||'');
+  if(actualF9!==null&&Number(actualF9)>0)remember(String(Number(actualF9)));
+  if(watch&&watch===pendingF9){
+    const note=/^F9 (?:&ndash;|–) (.+)$/.exec(d.f9notice||'')?.[1]||'';
+    if(!d.busy&&actualF9!==null&&Number(actualF9)===Number(watch.value)){
+      if(note)put(f9note,note);else say(f9note,'confirmed');pendingF9=null;
+    }else if((!d.busy&&note)||Date.now()>watch.until){
+      if(note)put(f9note,note);else say(f9note,'noAck');pendingF9=null;
+    }
+  }
+  paintF9();
+}
+async function changeF9(value){
+  if(toggle.disabled||pendingF9)return;
+  const job={value,sent:false,until:Date.now()+18000};pendingF9=job;
+  paintF9();say(f9note,'pending');
+  try{
+    await request('/hek-actie',{method:'POST',body:new URLSearchParams({actie:'f9',v:value,base:actualF9,token})});
+    job.sent=true;
+  }catch(error){
+    pendingF9=null;reportError(f9note,error,'settingTimeout');
+  }
+  nextInfo=0;paintF9();poll();
+}
+toggle.onclick=()=>changeF9(Number(actualF9)>0?'0':lastDelay);
+delaySelect.onchange=()=>{
+  if(delaySelect.disabled)return;
+  if(Number(actualF9)>0)changeF9(delaySelect.value);
+  else{remember(delaySelect.value);say(f9note,'remembered')}
+};
+
+// Project each leaf around its own hinge, viewed from the driveway.
+function swing(id,opening,side){
+  const angle=opening*Math.PI/2;
+  const depth=Math.sin(angle);
+  const width=.22+.78*Math.cos(angle);
+  el(id).style.transform='matrix('+width+','+(side*.18*depth)+',0,1,0,0)';
+}
+function draw(d){
+  const s=d.state,p=Number(d.pct),ok=Object.hasOwn(labels,s)&&d.pct!=null&&Number.isFinite(p)&&p>=0&&p<=100;
+  el('gate').toggleAttribute('data-unknown',!ok);
+  say(el('state'),ok?(s==='SINGLE STOPPED'&&p===25?'pedOpen':labels[s]):'noPosition');
+  el('pct').textContent=ok?p+'%':'—';
+  if(ok){
+    let large=p/100,ped=large;
+    if(s.endsWith('CLOSED'))large=ped=0;
+    else if(s==='FULL OPENED')large=ped=1;
+    else if(s==='PED OPENED'||s.startsWith('PED ')||s==='SINGLE STOPPED'||d.path==='single'){
+      ped=s==='PED OPENED'?1:Math.min(1,p/25); large=0;
+    }else if(d.path==='from_ped'){ped=1;large=Math.max(0,(p-25)/75)}
+    swing('left',large,-1);
+    swing('right',ped,1);
+  }
+  token=d.token||'';ready=ok&&!!token&&!d.busy;lock();
+}
+function details(d){
+  if(!d.rows)return;
+  el('rows').replaceChildren();
+  if(d.dev)el('dev').textContent=d.dev;else say(el('dev'),'awaitDevice');
+  if(d.old||!d.rows.length)say(el('age'),d.old?'stale':'reading');else el('age').textContent='';
+  for(const [key,label,value,raw] of d.rows){
+    const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');
+    put(dt,'F'+key+' '+label);put(dd,value+' ['+raw+']');row.append(dt,dd);el('rows').append(row);
+  }
+  nextInfo=Date.now()+(d.rows.length&&d.dev?30000:3000);
+}
+function reportError(node,err,timeout){
+  if(err.name==='AbortError')say(node,timeout);
+  else if(err instanceof TypeError)say(node,'netError');
+  else put(node,err.message||GateI18n.t('requestError'));
+}
+async function request(url,options={}){
+  const abort=new AbortController(), timeout=setTimeout(()=>abort.abort(),4500);
+  try{
+    const res=await fetch(url,{...options,signal:abort.signal,cache:'no-store',mode:'same-origin'});
+    const body=await res.text();
+    if(!res.ok)throw Error(res.status===409||res.status===403||res.status===400?body.trim():'HTTP '+res.status);
+    return body;
+  }finally{clearTimeout(timeout)}
+}
+async function poll(){
+  clearTimeout(timer);if(document.hidden||reading)return;
+  reading=true;let delay=1200;
+  try{
+    const watch=pendingF9?.sent?pendingF9:null;
+    const args=new URLSearchParams();
+    if(watch)args.set('f9check','1');
+    if(Date.now()>=nextInfo)args.set('info','1');
+    const d=JSON.parse(await request('/hek-data?'+args));
+    draw(d);details(d);receiveF9(d,watch);
+    if(!d.state)delay=1800;
+  }catch{draw({});receiveF9({},pendingF9?.sent?pendingF9:null);say(el('state'),'offline');say(el('age'),'lastRead');nextInfo=0;delay=2500}
+  finally{reading=false;if(!document.hidden)timer=setTimeout(poll,delay)}
+}
+el('keys').onclick=async e=>{
+  const b=e.target.closest('.actions button');if(!b||!ready||sending)return;
+  sending=true;lock();say(el('feedback'),'sending');
+  try{
+    await request('/hek-actie',{method:'POST',body:new URLSearchParams({actie:b.value,token})});
+    say(el('feedback'),'sent',b.value);
+  }catch(err){reportError(el('feedback'),err,'gateTimeout')}
+  finally{sending=false;lock();poll()}
+};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){ready=false;lock()}else{nextInfo=0}poll()});
+GateI18n.ready.then(poll);
+</script></html>

@@ -2,9 +2,30 @@
 
 [gate.be](gate.be) connects a TMT CB19 gate controller to a local MQTT broker and Homebridge. The ESP32 reads the gate position over serial, displays all 19 controller settings and provides controls for pairing a remote and learning gate travel. The TMT CHOW cloud service is optional.
 
-This driver has been used with Tasmota32 14.4.1 and a CB19 reporting `P190,PS17062E,V0.3` through `READ DEVINFO`. The web controls use Dutch labels. The original hardware photos and serial captures are included [below](#hardware-and-protocol-notes).
+This driver has been used with Tasmota32 14.4.1 and a CB19 reporting `P190,PS17062E,V0.3` through `READ DEVINFO`. The gate dashboard, controller settings and learning forms are available in Dutch, English and German. The original hardware photos and serial captures are included [below](#hardware-and-protocol-notes).
 
-## Install or upgrade
+## Install the dashboard on Tasmota32
+
+[**Download CB19-Gate.tapp**](https://github.com/RPJacobs/CB19-GATE-CONTROL-SYSTEM/releases/latest/download/CB19-Gate.tapp) · [All releases](https://github.com/RPJacobs/CB19-GATE-CONTROL-SYSTEM/releases)
+
+For an ESP32 running Tasmota32 with Berry, filesystem, web server and MQTT support. The driver uses **GPIO17 RX, GPIO16 TX, 9600 baud, 8N1**. Check your board's serial interface and voltage levels. Configure your broker in Tasmota if you use Homebridge. Keep MQTT movement commands non-retained.
+
+1. Download **CB19-Gate.tapp** and keep the file intact.
+2. In Tasmota open **Tools → Manage File system**, select the file and click **Upload** in the filesystem root.
+3. With the gate stationary and in view, **restart** the ESP. Click **Hekoverzicht** on the Tasmota home page or open `/hek`. Check the reported gate position and **READ DEVINFO**.
+
+The app contains the driver, dashboard and language files. The two-leaf diagram shows the CB19 position. The dashboard opens either the pedestrian gate or both leaves, closes the gate, and controls F9 automatic closing. The language selector remembers the choice in each browser.
+
+### Upgrade or roll back
+
+- **Earlier single-file release** — download the new package, replace **CB19-Gate.tapp** under the same name and restart. To roll back, upload the previous release with the same filename and restart. Keep just one active CB19 application.
+- **Earlier loose-file installation** — download a backup of the current gate scripts and root `autoexec.be`. Remove only the CB19 startup lines for `gate.be` or `hek.be` and `hekweb.be`. Move those loose driver files and matching `.bec` files out of the root, or rename them with a `.bak` suffix. If you previously used `Hekoverzicht.tapp`, download a backup and remove it from the ESP. Upload the new package and restart once. Keep other startup lines and apps. The packaged driver skips startup when it detects the old files. To roll back, remove the new package, restore your backups and restart.
+
+### Change translations or publish a release
+
+Edit [nl.json](app/nl.json), [en.json](app/en.json) or [de.json](app/de.json) and keep the keys consistent. Run `python3 app/build.py` from the repository to build `dist/CB19-Gate.tapp`. Maintainers can publish the build from **Actions → Publish Tasmota application → Run workflow** on `main` by entering a new version such as `v1.1.0`. The release attaches the package built from that commit.
+
+## Standalone driver installation
 
 1. Use an ESP32 running Tasmota with Berry, MQTT, the web server and filesystem enabled. The driver opens GPIO17 as RX and GPIO16 as TX at 9600 baud, 8 data bits, no parity and one stop bit. Check the serial interface and logic levels for your board before connecting it.
 2. Configure your broker in Tasmota and back up the current Berry driver and `autoexec.be`. On an upgrade, check the MQTT mappings below. Movement commands should be published with **retain off**. A broker can replay a retained command when the ESP reconnects.
